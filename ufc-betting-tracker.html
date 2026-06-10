@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0">
+<title>UFC Betting Tracker 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+/* ─── 60:30:10 BATMAN BEYOND ───────────────────
+   60% → Deep charcoal / near-black  #0D0F14 #131720 #1A1F2E
+   30% → Electric neon blue          #1B6BFF #2979FF #0A4FCC
+   10% → Sharp red-orange accent     #FF3A2F #E8192C
+──────────────────────────────────────────────── */
+:root {
+  /* 60% — dominant darks */
+  --bg:      #0A0C10;
+  --p1:      #0F1219;
+  --p2:      #141824;
+  --p3:      #1C2130;
+
+  /* 30% — electric blue */
+  --blue:    #1B6BFF;
+  --blue2:   #4D8FFF;
+  --blue3:   #0A3FA0;
+  --blue-dim: rgba(27,107,255,0.12);
+  --blue-glow: rgba(27,107,255,0.25);
+
+  /* 10% — red-orange pop */
+  --red:     #FF3A2F;
+  --red2:    #FF5247;
+
+  /* neutrals */
+  --text:    #D8E0F0;
+  --dim:     #3A4560;
+  --border:  rgba(27,107,255,0.15);
+  --border2: rgba(255,255,255,0.05);
+}
+
+html, body {
+  width: 390px;
+  height: 844px;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  width: 390px;
+  height: 844px;
+  display: grid;
+  grid-template-rows: 130px 88px 36px 1fr 36px 1fr 44px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ═══════════════════════
+   HERO  (60% dark dominates)
+═══════════════════════ */
+.hero {
+  background: var(--p1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Big blue slab — 30% moment */
+.hero-blue {
+  position: absolute;
+  top: 0; left: 0;
+  width: 200px; height: 130px;
+  background: var(--blue);
+  clip-path: polygon(0 0, 100% 0, 72% 100%, 0 100%);
+}
+
+/* Dark notch cuts into blue */
+.hero-blue::after {
+  content: '';
+  position: absolute;
+  top: 0; right: -1px;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 55px 55px 0;
+  border-color: transparent var(--p1) transparent transparent;
+}
+
+/* Red accent slash — 10% pop */
+.hero-red-slash {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 220px; height: 3px;
+  background: var(--red);
+}
+
+/* Scan-line texture — cyberpunk feel */
+.hero-scan {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.12) 3px,
+    rgba(0,0,0,0.12) 4px
+  );
+  z-index: 1; pointer-events: none;
+}
+
+/* Blue grid lines on dark side */
+.hero-grid {
+  position: absolute;
+  top: 0; right: 0;
+  width: 200px; height: 130px;
+  background-image:
+    linear-gradient(rgba(27,107,255,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27,107,255,0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
+  z-index: 0;
+}
+
+.hero-inner {
+  position: relative; z-index: 3;
+  padding: 18px 20px 0;
+}
+
+.eyebrow {
+  font-size: 7.5px; font-weight: 500;
+  letter-spacing: 0.4em; text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 2px;
+}
+
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 58px; line-height: 0.88;
+  letter-spacing: 0.03em;
+  color: #fff;
+}
+
+.logo-season {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 300;
+  letter-spacing: 0.5em; text-transform: uppercase;
+  color: var(--blue2);
+  margin-top: 5px;
+}
+
+/* Blue glow line bottom of hero */
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1.5px;
+  background: var(--blue);
+  box-shadow: 0 0 12px var(--blue-glow);
+  z-index: 4;
+}
+
+/* ═══════════════════════
+   4 STAT CARDS  (30% blue panels)
+═══════════════════════ */
+.cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  background: var(--border);
+  gap: 1px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card {
+  background: var(--p2);
+  padding: 9px 10px 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Blue top stripe — 30% */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1.5px;
+  background: var(--blue);
+}
+
+/* Blue corner glow */
+.card::after {
+  content: '';
+  position: absolute;
+  top: -15px; left: -15px;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--blue);
+  opacity: 0.07;
+}
+
+/* Red accent on specific card — 10% */
+.card.accent-red::before { background: var(--red); }
+.card.accent-red::after  { background: var(--red); }
+
+.cl {
+  font-size: 6px; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 3px;
+}
+
+.cv {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.cv.blue  { color: var(--blue2); }
+.cv.green { color: #00D4FF; }   /* cyan-green — still in blue family */
+.cv.red   { color: var(--red); }
+.cv.white { color: #fff; }
+
+.cs {
+  font-size: 7px; font-weight: 300;
+  color: var(--dim);
+  margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ═══════════════════════
+   SECTION HEADERS
+═══════════════════════ */
+.sec-hd {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 16px;
+  background: var(--bg);
+}
+
+.sec-txt {
+  font-size: 7px; font-weight: 600;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--blue2);
+  white-space: nowrap;
+}
+
+.sec-line {
+  flex: 1; height: 1px;
+  background: var(--border);
+}
+
+/* ═══════════════════════
+   BARS  (blue = profit, red = loss)
+═══════════════════════ */
+.bars-wrap {
+  background: var(--p1);
+  padding: 8px 14px;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 14px 1fr 58px;
+  align-items: center;
+  gap: 7px;
+}
+
+.bi {
+  font-size: 7.5px;
+  color: var(--dim);
+  text-align: right;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
+.bt {
+  height: 5px;
+  background: var(--p3);
+  border-radius: 1px;
+  position: relative; overflow: hidden;
+}
+
+.bf {
+  position: absolute; left: 0; top: 0;
+  height: 100%; border-radius: 1px;
+}
+
+/* 30% blue for profit bars */
+.bf.p { background: var(--blue); }
+/* 10% red for loss bars */
+.bf.n { background: var(--red); }
+
+.bamt {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9.5px; font-weight: 600;
+  text-align: right;
+}
+
+.bamt.p { color: var(--blue2); }
+.bamt.n { color: var(--red); }
+
+/* ═══════════════════════
+   TABLE
+═══════════════════════ */
+.tbl-wrap {
+  background: var(--p1);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.tbl-head {
+  display: grid;
+  grid-template-columns: 1fr 58px 58px 52px;
+  padding: 5px 14px;
+  background: var(--p2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.th {
+  font-size: 6.5px; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--blue2);
+}
+
+.th:not(:first-child) { text-align: right; }
+
+.tbl-body {
+  flex: 1;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.tr {
+  display: grid;
+  grid-template-columns: 1fr 58px 58px 52px;
+  padding: 0 14px;
+  align-items: center;
+  position: relative;
+  border-bottom: 1px solid rgba(27,107,255,0.07);
+  flex: 1;
+}
+
+.tr::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 18%; bottom: 18%;
+  width: 1.5px;
+}
+
+/* Blue for profit — 30% */
+.tr.pr::before { background: var(--blue); }
+/* Red for loss — 10% */
+.tr.ls::before { background: var(--red); }
+
+.tr:nth-child(even) { background: rgba(27,107,255,0.04); }
+
+.tr.tot {
+  background: var(--p2);
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+  flex: none;
+  padding: 5px 14px;
+}
+.tr.tot::before { display: none; }
+
+.t-name {
+  font-size: 9px; font-weight: 500;
+  color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 0 6px 0 5px;
+}
+
+.td {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px; text-align: right;
+}
+
+.td.mu  { color: var(--dim); }
+.td.pr  { color: var(--blue2); font-weight: 600; }
+.td.ls  { color: var(--red);   font-weight: 600; }
+.td.go  { color: #fff;         font-weight: 600; }
+.td.tl  {
+  font-size: 6.5px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--blue2); text-align: left;
+}
+
+/* ═══════════════════════
+   FOOTER PIPS
+═══════════════════════ */
+.footer {
+  background: var(--p2);
+  border-top: 1px solid var(--border);
+  padding: 0 14px;
+  display: flex; align-items: center;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.pip-label {
+  font-size: 6px; font-weight: 600;
+  letter-spacing: 0.25em; text-transform: uppercase;
+  color: var(--blue2);
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.pip {
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px; font-weight: 700; letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+/* Blue wins — 30% */
+.pip.w { background: var(--blue); color: #fff; }
+/* Red losses — 10% */
+.pip.l { background: var(--red); color: #fff; }
+
+.footer-roi {
+  margin-left: auto;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  color: var(--blue2);
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-blue"></div>
+    <div class="hero-red-slash"></div>
+    <div class="hero-scan"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-inner">
+      <div class="eyebrow">Betting Performance</div>
+      <div class="logo">UFC<br>TRACKER</div>
+      <div class="logo-season">2026 Season</div>
+    </div>
+  </div>
+
+  <!-- CARDS -->
+  <div class="cards">
+    <div class="card">
+      <div class="cl">Wagered</div>
+      <div class="cv white" id="c1">—</div>
+      <div class="cs" id="c1s">—</div>
+    </div>
+    <div class="card">
+      <div class="cl">Net P&amp;L</div>
+      <div class="cv" id="c2">—</div>
+      <div class="cs" id="c2s">—</div>
+    </div>
+    <div class="card">
+      <div class="cl">Record</div>
+      <div class="cv blue" id="c3">—</div>
+      <div class="cs" id="c3s">—</div>
+    </div>
+    <div class="card accent-red">
+      <div class="cl">Best Win</div>
+      <div class="cv blue" id="c4">—</div>
+      <div class="cs" id="c4s">—</div>
+    </div>
+  </div>
+
+  <!-- BARS HEADER -->
+  <div class="sec-hd">
+    <div class="sec-txt">P&amp;L Per Event</div>
+    <div class="sec-line"></div>
+  </div>
+
+  <!-- BARS -->
+  <div class="bars-wrap" id="bars"></div>
+
+  <!-- TABLE HEADER -->
+  <div class="sec-hd">
+    <div class="sec-txt">Full Event Log</div>
+    <div class="sec-line"></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="tbl-wrap">
+    <div class="tbl-head">
+      <div class="th">Event</div>
+      <div class="th">Bet</div>
+      <div class="th">Out</div>
+      <div class="th">P&amp;L</div>
+    </div>
+    <div class="tbl-body" id="tbody"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="pip-label">Results</div>
+    <div id="pips" style="display:flex;gap:3px;align-items:center;flex-wrap:nowrap;overflow:hidden;flex:1;"></div>
+    <div class="footer-roi" id="roi">—</div>
+  </div>
+
+</div>
+
+<script>
+const E = [
+  {name:"UFC 324",                     bet:144,    withdrew:200,     pnl:56},
+  {name:"UFC 325",                     bet:212.71, withdrew:325,     pnl:112.29},
+  {name:"FN Mario vs Vini",            bet:173.48, withdrew:546.77,  pnl:373.29},
+  {name:"Strickland vs Fluffy",        bet:402.30, withdrew:90,      pnl:-312.30},
+  {name:"Moreno vs Kavanagh",          bet:200,    withdrew:150,     pnl:-50},
+  {name:"UFC 326 Max vs Charles",      bet:319.45, withdrew:305,     pnl:-14.45},
+  {name:"FN Vallejos vs Emmett",       bet:352.99, withdrew:612,     pnl:259.01},
+  {name:"London Mosvar vs Murphy",     bet:433.11, withdrew:586,     pnl:153},
+  {name:"Seattle Izzy vs Pyfer",       bet:649.70, withdrew:220,     pnl:-429.70},
+  {name:"Duncan vs Renato",            bet:541.76, withdrew:507,     pnl:-34.77},
+  {name:"UFC 327 Jiri vs Carlos",      bet:719.52, withdrew:752.68,  pnl:33.16},
+  {name:"Canada Burns vs Mallot",      bet:555.56, withdrew:825.91,  pnl:270.35},
+  {name:"Vegas 116 Sterling vs Zalal", bet:587.53, withdrew:1036.69, pnl:449.16},
+  {name:"Perth JDM vs Prates",         bet:663.41, withdrew:2055.43, pnl:1392.02},
+  {name:"UFC 328 Strickland vs Khazmat", bet:693.21, withdrew:526, pnl:-167.21},
+  {name:"FN Allen vs Costa",            bet:697.19, withdrew:844.23, pnl:147.04},
+  {name:"Macau Figgy vs Song",          bet:341.01, withdrew:109.44, pnl:-231.57},
+  {name:"FN Belal vs Bonfim",           bet:661.54, withdrew:275.88, pnl:-385.66},
+];
+
+const f = (n,p=false) => (n>=0?(p?'+':''):'-')+'$'+Math.abs(n).toFixed(2);
+const tBet = E.reduce((s,e)=>s+e.bet,0);
+const tOut = E.reduce((s,e)=>s+e.withdrew,0);
+const net  = E.reduce((s,e)=>s+e.pnl,0);
+const wins = E.filter(e=>e.pnl>0).length;
+const roi  = net/tBet*100;
+const bW   = E.reduce((b,e)=>e.pnl>b.pnl?e:b,E[0]);
+const mx   = Math.max(...E.map(e=>Math.abs(e.pnl)));
+const wr   = Math.round(wins/E.length*100);
+
+// Cards
+document.getElementById('c1').textContent  = '$'+tBet.toFixed(0);
+document.getElementById('c1s').textContent = E.length+' events';
+const c2 = document.getElementById('c2');
+c2.textContent = f(net,true);
+c2.className   = 'cv '+(net>=0?'green':'red');
+document.getElementById('c2s').textContent = 'ROI '+(roi>=0?'+':'')+roi.toFixed(1)+'%';
+document.getElementById('c3').textContent  = wins+' / '+(E.length-wins);
+document.getElementById('c3s').textContent = wr+'% win rate';
+document.getElementById('c4').textContent  = f(bW.pnl,true);
+document.getElementById('c4s').textContent = bW.name.split(' ').slice(0,3).join(' ');
+document.getElementById('roi').textContent = 'ROI '+(roi>=0?'+':'')+roi.toFixed(1)+'%';
+
+// Bars
+const bEl = document.getElementById('bars');
+E.forEach((e,i) => {
+  const pct = (Math.abs(e.pnl)/mx*100).toFixed(1);
+  const r = document.createElement('div');
+  r.className = 'bar-row';
+  r.innerHTML = `
+    <div class="bi">${i+1}</div>
+    <div class="bt"><div class="bf ${e.pnl>=0?'p':'n'}" style="width:${pct}%"></div></div>
+    <div class="bamt ${e.pnl>=0?'p':'n'}">${f(e.pnl,true)}</div>`;
+  bEl.appendChild(r);
+});
+
+// Table
+const tb = document.getElementById('tbody');
+E.forEach(e => {
+  const r = document.createElement('div');
+  r.className = 'tr '+(e.pnl>=0?'pr':'ls');
+  r.innerHTML = `
+    <div class="t-name">${e.name}</div>
+    <div class="td mu">$${e.bet.toFixed(0)}</div>
+    <div class="td mu">$${e.withdrew.toFixed(0)}</div>
+    <div class="td ${e.pnl>=0?'pr':'ls'}">${f(e.pnl,true)}</div>`;
+  tb.appendChild(r);
+});
+const tot = document.createElement('div');
+tot.className = 'tr tot';
+tot.innerHTML = `
+  <div class="td tl">Totals</div>
+  <div class="td go">$${tBet.toFixed(0)}</div>
+  <div class="td mu">$${tOut.toFixed(0)}</div>
+  <div class="td ${net>=0?'pr':'ls'}">${f(net,true)}</div>`;
+tb.appendChild(tot);
+
+// Pips
+const pEl = document.getElementById('pips');
+E.forEach(e => {
+  const d = document.createElement('div');
+  d.className = 'pip '+(e.pnl>=0?'w':'l');
+  d.textContent = e.pnl>=0?'W':'L';
+  pEl.appendChild(d);
+});
+</script>
+</body>
+</html>
