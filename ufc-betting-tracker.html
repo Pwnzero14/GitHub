@@ -62,7 +62,7 @@ html, body {
   background: var(--p1);
   position: relative;
   overflow: hidden;
-  height: 130px;
+  height: 150px;
   flex-shrink: 0;
 }
 
@@ -70,7 +70,7 @@ html, body {
 .hero-blue {
   position: absolute;
   top: 0; left: 0;
-  width: 200px; height: 130px;
+  width: 210px; height: 150px;
   background: var(--blue);
   clip-path: polygon(0 0, 100% 0, 72% 100%, 0 100%);
 }
@@ -111,7 +111,7 @@ html, body {
 .hero-grid {
   position: absolute;
   top: 0; right: 0;
-  width: 200px; height: 130px;
+  width: 220px; height: 150px;
   background-image:
     linear-gradient(rgba(27,107,255,0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(27,107,255,0.08) 1px, transparent 1px);
@@ -119,9 +119,39 @@ html, body {
   z-index: 0;
 }
 
+/* Live net P&L readout on the dark side */
+.hero-net {
+  position: absolute;
+  right: 16px; bottom: 14px;
+  z-index: 3;
+  text-align: right;
+}
+
+.hero-net-lbl {
+  font-size: 6.5px; font-weight: 600;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 2px;
+}
+
+.hero-net-val {
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+  font-size: 30px; line-height: 1;
+}
+.hero-net-val.p { color: var(--blue2); text-shadow: 0 0 18px var(--blue-glow); }
+.hero-net-val.n { color: var(--red);   text-shadow: 0 0 18px rgba(255,58,47,0.3); }
+
+.hero-net-roi {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px; font-weight: 500;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+  margin-top: 3px;
+}
+
 .hero-inner {
   position: relative; z-index: 3;
-  padding: 18px 20px 0;
+  padding: 16px 20px 0;
 }
 
 .eyebrow {
@@ -132,10 +162,11 @@ html, body {
 }
 
 .logo {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 58px; line-height: 0.88;
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+  font-size: 52px; line-height: 0.9;
   letter-spacing: 0.03em;
   color: #fff;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.35);
 }
 
 .logo-season {
@@ -173,7 +204,9 @@ html, body {
   padding: 10px 10px 9px;
   position: relative;
   overflow: hidden;
+  transition: background 0.2s;
 }
+.card:hover { background: var(--p3); }
 
 /* Blue top stripe — 30% */
 .card::before {
@@ -256,6 +289,7 @@ html, body {
   padding: 8px 16px;
   color: #fff;
   background: var(--blue);
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
   transition: filter 0.15s;
 }
 .btn:hover { filter: brightness(1.15); }
@@ -371,7 +405,7 @@ html, body {
 
 .bar-row {
   display: grid;
-  grid-template-columns: 14px 1fr 58px;
+  grid-template-columns: 92px 1fr 56px;
   align-items: center;
   gap: 7px;
   cursor: pointer;
@@ -383,10 +417,13 @@ html, body {
 .bar-row:hover, .bar-row.hot { background: var(--blue-dim); }
 
 .bi {
-  font-size: 8px;
+  font-size: 8.5px;
   color: var(--dim);
   text-align: right;
   font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 .bt {
@@ -482,7 +519,7 @@ html, body {
 .tr.ls::before { background: var(--red); }
 
 .tr:nth-child(even) { background: rgba(27,107,255,0.04); }
-.tr.hot { background: var(--blue-dim); }
+.tr:hover:not(.tot), .tr.hot { background: var(--blue-dim); }
 
 .tr.tot {
   background: var(--p2);
@@ -681,6 +718,11 @@ html, body {
       <div class="logo">UFC<br>TRACKER</div>
       <div class="logo-season">2026 Season</div>
     </div>
+    <div class="hero-net">
+      <div class="hero-net-lbl">Net P&amp;L</div>
+      <div class="hero-net-val" id="hero-net">—</div>
+      <div class="hero-net-roi" id="hero-roi"></div>
+    </div>
   </div>
 
   <!-- CARDS -->
@@ -871,8 +913,9 @@ function streaks() {
 
 function renderCards() {
   if (!E.length) {
-    ['c1','c2','c3','c4','c5','c6','c7','c8','roi'].forEach(id => document.getElementById(id).textContent = '—');
+    ['c1','c2','c3','c4','c5','c6','c7','c8','roi','hero-net'].forEach(id => document.getElementById(id).textContent = '—');
     ['c1s','c2s','c3s','c4s','c5s','c6s','c7s','c8s'].forEach(id => document.getElementById(id).textContent = 'no events');
+    document.getElementById('hero-roi').textContent = '';
     return;
   }
   const { tBet, net, wins, roi } = stats();
@@ -900,6 +943,11 @@ function renderCards() {
   document.getElementById('c8').textContent  = sk.bestW+'W';
   document.getElementById('c8s').textContent = 'worst run '+sk.bestL+'L';
   document.getElementById('roi').textContent = 'ROI '+(roi>=0?'+':'')+roi.toFixed(1)+'%';
+  const hn = document.getElementById('hero-net');
+  hn.textContent = f(net,true);
+  hn.className   = 'hero-net-val '+(net>=0?'p':'n');
+  document.getElementById('hero-roi').textContent =
+    'ROI '+(roi>=0?'+':'')+roi.toFixed(1)+'% · '+E.length+' events';
 }
 
 function renderChart() {
@@ -936,6 +984,12 @@ function renderChart() {
     points: line+` ${pts[pts.length-1][0].toFixed(1)},${H-padY} ${pts[0][0].toFixed(1)},${H-padY}`,
     fill: 'url(#cg)'
   });
+  // Faint horizontal gridlines
+  for (let g = 1; g <= 3; g++) {
+    const gy = padY + g * (H - 2*padY) / 4;
+    el('line', { x1: padX, x2: W-padX, y1: gy, y2: gy,
+      stroke: 'rgba(27,107,255,0.08)', 'stroke-width': 0.75 });
+  }
   // Zero baseline (dashed) when it falls inside the range
   if (mn < 0 && mxv > 0) {
     el('line', { x1: padX, x2: W-padX, y1: y(0), y2: y(0),
@@ -944,6 +998,11 @@ function renderChart() {
   el('polyline', { points: line, fill: 'none',
     stroke: last >= 0 ? '#1B6BFF' : '#FF3A2F', 'stroke-width': 1.75,
     'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+  // W/L dot at each event point
+  E.forEach((e,i) => {
+    el('circle', { cx: pts[i+1][0], cy: pts[i+1][1], r: 1.75,
+      fill: e.pnl >= 0 ? '#4D8FFF' : '#FF3A2F' });
+  });
   // End dot + label
   const [ex, ey] = pts[pts.length-1];
   el('circle', { cx: ex, cy: ey, r: 3, fill: last >= 0 ? '#4D8FFF' : '#FF3A2F' });
@@ -964,8 +1023,9 @@ function renderBars() {
     const r = document.createElement('div');
     r.className = 'bar-row';
     r.dataset.i = e.i;
+    const short = e.name.length > 16 ? e.name.slice(0,15)+'…' : e.name;
     r.innerHTML = `
-      <div class="bi">${i+1}</div>
+      <div class="bi" title="${esc(e.name)}">${esc(short)}</div>
       <div class="bt"><div class="bf ${e.pnl>=0?'p':'n'}"></div></div>
       <div class="bamt ${e.pnl>=0?'p':'n'}">${f(e.pnl,true)}</div>`;
     r.addEventListener('click', () => highlight(e.i));
