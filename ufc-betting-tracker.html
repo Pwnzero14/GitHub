@@ -225,6 +225,104 @@ html, body {
 }
 
 /* ═══════════════════════
+   ADD / EDIT BET FORM
+═══════════════════════ */
+.form-bar {
+  padding: 10px 14px 0;
+  display: flex; justify-content: flex-end;
+}
+
+.btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  border: none; cursor: pointer;
+  padding: 8px 16px;
+  color: #fff;
+  background: var(--blue);
+  transition: filter 0.15s;
+}
+.btn:hover { filter: brightness(1.15); }
+.btn.ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--blue2);
+}
+.btn.danger { background: var(--red); }
+
+.form-panel {
+  margin: 10px 14px 0;
+  background: var(--p2);
+  border: 1px solid var(--border);
+  border-top: 1.5px solid var(--blue);
+  padding: 12px;
+  display: none;
+}
+.form-panel.open { display: block; }
+
+.form-title {
+  font-size: 8px; font-weight: 600;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--blue2);
+  margin-bottom: 10px;
+}
+
+.field { margin-bottom: 9px; }
+
+.field label {
+  display: block;
+  font-size: 6.5px; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 3px;
+}
+
+.field input {
+  width: 100%;
+  background: var(--p1);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-size: 12px;
+  padding: 7px 9px;
+  outline: none;
+}
+.field input:focus { border-color: var(--blue); }
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.pnl-preview {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  margin: 2px 0 10px;
+}
+.pnl-preview .lbl {
+  font-family: 'Barlow', sans-serif;
+  font-size: 6.5px; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--dim);
+  margin-right: 6px;
+}
+.pnl-preview.p { color: var(--blue2); }
+.pnl-preview.n { color: var(--red); }
+
+.form-actions { display: flex; gap: 8px; }
+.form-actions .spacer { flex: 1; }
+
+.reset-link {
+  font-size: 7px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--dim);
+  background: none; border: none; cursor: pointer;
+  margin-top: 10px;
+  text-decoration: underline;
+}
+.reset-link:hover { color: var(--red); }
+
+/* ═══════════════════════
    SECTION HEADERS
 ═══════════════════════ */
 .sec-hd {
@@ -490,6 +588,36 @@ html, body {
     </div>
   </div>
 
+  <!-- ADD / EDIT BET -->
+  <div class="form-bar">
+    <button class="btn" id="toggle-form">+ Add Event</button>
+  </div>
+  <div class="form-panel" id="form-panel">
+    <div class="form-title" id="form-title">Log a Bet</div>
+    <div class="field">
+      <label for="f-name">Event Name</label>
+      <input id="f-name" type="text" placeholder="UFC 329 Jones vs Aspinall" autocomplete="off">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="f-bet">Total Bet ($)</label>
+        <input id="f-bet" type="number" step="0.01" min="0" placeholder="250.00">
+      </div>
+      <div class="field">
+        <label for="f-out">Withdrew ($)</label>
+        <input id="f-out" type="number" step="0.01" min="0" placeholder="400.00">
+      </div>
+    </div>
+    <div class="pnl-preview" id="pnl-preview"><span class="lbl">P&amp;L</span>—</div>
+    <div class="form-actions">
+      <button class="btn" id="f-save">Save</button>
+      <button class="btn ghost" id="f-cancel">Cancel</button>
+      <div class="spacer"></div>
+      <button class="btn danger" id="f-delete" style="display:none">Delete</button>
+    </div>
+    <button class="reset-link" id="f-reset">Reset to original data</button>
+  </div>
+
   <!-- BARS HEADER -->
   <div class="sec-hd">
     <div class="sec-txt">P&amp;L Per Event</div>
@@ -526,7 +654,9 @@ html, body {
 </div>
 
 <script>
-const E = [
+const STORE_KEY = 'ufc-tracker-2026';
+
+const SEED = [
   {name:"UFC 324",                     bet:144,    withdrew:200,     pnl:56},
   {name:"UFC 325",                     bet:212.71, withdrew:325,     pnl:112.29},
   {name:"FN Mario vs Vini",            bet:173.48, withdrew:546.77,  pnl:373.29},
@@ -546,6 +676,23 @@ const E = [
   {name:"Macau Figgy vs Song",          bet:341.01, withdrew:109.44, pnl:-231.57},
   {name:"FN Belal vs Bonfim",           bet:661.54, withdrew:275.88, pnl:-385.66},
 ];
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return data;
+    }
+  } catch (e) {}
+  return SEED.map(e => ({...e}));
+}
+
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(E)); } catch (e) {}
+}
+
+let E = load();
 E.forEach((e,i) => e.i = i);
 
 const f = (n,p=false) => (n>=0?(p?'+':''):'-')+'$'+Math.abs(n).toFixed(2);
@@ -562,6 +709,11 @@ function stats() {
 }
 
 function renderCards() {
+  if (!E.length) {
+    ['c1','c2','c3','c4','roi'].forEach(id => document.getElementById(id).textContent = '—');
+    ['c1s','c2s','c3s','c4s'].forEach(id => document.getElementById(id).textContent = 'no events');
+    return;
+  }
   const { tBet, net, wins, roi } = stats();
   const bW = E.reduce((b,e)=>e.pnl>b.pnl?e:b,E[0]);
   document.getElementById('c1').textContent  = '$'+tBet.toFixed(0);
@@ -578,7 +730,7 @@ function renderCards() {
 }
 
 function renderBars() {
-  const mx = Math.max(...E.map(e=>Math.abs(e.pnl)));
+  const mx = Math.max(1, ...E.map(e=>Math.abs(e.pnl)));
   const bEl = document.getElementById('bars');
   bEl.innerHTML = '';
   E.forEach((e,i) => {
@@ -623,6 +775,7 @@ function renderTable() {
       <div class="td mu">$${e.bet.toFixed(0)}</div>
       <div class="td mu">$${e.withdrew.toFixed(0)}</div>
       <div class="td ${e.pnl>=0?'pr':'ls'}">${f(e.pnl,true)}</div>`;
+    r.addEventListener('click', () => openEdit(e.i));
     tb.appendChild(r);
   });
   const tot = document.createElement('div');
@@ -674,10 +827,113 @@ document.getElementById('thead').addEventListener('click', ev => {
   renderTable();
 });
 
-renderCards();
-renderBars();
-renderTable();
-renderPips();
+function renderAll() {
+  renderCards();
+  renderBars();
+  renderTable();
+  renderPips();
+}
+
+/* ── Add / edit / delete ── */
+const panel   = document.getElementById('form-panel');
+const fName   = document.getElementById('f-name');
+const fBet    = document.getElementById('f-bet');
+const fOut    = document.getElementById('f-out');
+const fDelete = document.getElementById('f-delete');
+const fTitle  = document.getElementById('form-title');
+const preview = document.getElementById('pnl-preview');
+let editI = null;   // index being edited, or null when adding
+
+function previewPnl() {
+  const bet = parseFloat(fBet.value), out = parseFloat(fOut.value);
+  if (isNaN(bet) || isNaN(out)) {
+    preview.innerHTML = '<span class="lbl">P&L</span>—';
+    preview.className = 'pnl-preview';
+    return;
+  }
+  const pnl = out - bet;
+  preview.innerHTML = '<span class="lbl">P&L</span>'+f(pnl,true);
+  preview.className = 'pnl-preview '+(pnl>=0?'p':'n');
+}
+fBet.addEventListener('input', previewPnl);
+fOut.addEventListener('input', previewPnl);
+
+function openForm() {
+  panel.classList.add('open');
+  panel.scrollIntoView({ behavior:'smooth', block:'center' });
+  fName.focus();
+}
+
+function closeForm() {
+  panel.classList.remove('open');
+  editI = null;
+  fName.value = fBet.value = fOut.value = '';
+  previewPnl();
+}
+
+function openAdd() {
+  closeForm();
+  fTitle.textContent = 'Log a Bet';
+  fDelete.style.display = 'none';
+  openForm();
+}
+
+function openEdit(i) {
+  editI = i;
+  const e = E[i];
+  fTitle.textContent = 'Edit — '+e.name;
+  fName.value = e.name;
+  fBet.value  = e.bet;
+  fOut.value  = e.withdrew;
+  fDelete.style.display = '';
+  previewPnl();
+  openForm();
+}
+
+document.getElementById('toggle-form').addEventListener('click', () => {
+  if (panel.classList.contains('open')) closeForm();
+  else openAdd();
+});
+
+document.getElementById('f-cancel').addEventListener('click', closeForm);
+
+document.getElementById('f-save').addEventListener('click', () => {
+  const name = fName.value.trim();
+  const bet  = parseFloat(fBet.value);
+  const out  = parseFloat(fOut.value);
+  if (!name || isNaN(bet) || isNaN(out) || bet < 0 || out < 0) {
+    alert('Enter an event name plus valid bet and withdrew amounts.');
+    return;
+  }
+  const rec = { name, bet, withdrew: out, pnl: +(out - bet).toFixed(2) };
+  if (editI === null) E.push(rec);
+  else E[editI] = { ...E[editI], ...rec };
+  E.forEach((e,i) => e.i = i);
+  save();
+  closeForm();
+  renderAll();
+});
+
+fDelete.addEventListener('click', () => {
+  if (editI === null) return;
+  if (!confirm('Delete "'+E[editI].name+'"?')) return;
+  E.splice(editI, 1);
+  E.forEach((e,i) => e.i = i);
+  save();
+  closeForm();
+  renderAll();
+});
+
+document.getElementById('f-reset').addEventListener('click', () => {
+  if (!confirm('Discard your changes and restore the original 18 events?')) return;
+  E = SEED.map(e => ({...e}));
+  E.forEach((e,i) => e.i = i);
+  save();
+  closeForm();
+  renderAll();
+});
+
+renderAll();
 </script>
 </body>
 </html>
