@@ -225,6 +225,22 @@ html, body {
 }
 
 /* ═══════════════════════
+   BANKROLL CHART
+═══════════════════════ */
+.chart-wrap {
+  background: var(--p1);
+  border-top: 1px solid var(--border2);
+  border-bottom: 1px solid var(--border2);
+  padding: 10px 14px 8px;
+}
+
+.chart-wrap svg {
+  display: block;
+  width: 100%;
+  height: 120px;
+}
+
+/* ═══════════════════════
    ADD / EDIT BET FORM
 ═══════════════════════ */
 .form-bar {
@@ -586,6 +602,35 @@ html, body {
       <div class="cv blue" id="c4">—</div>
       <div class="cs" id="c4s">—</div>
     </div>
+    <div class="card accent-red">
+      <div class="cl">Worst Loss</div>
+      <div class="cv red" id="c5">—</div>
+      <div class="cs" id="c5s">—</div>
+    </div>
+    <div class="card">
+      <div class="cl">Avg Bet</div>
+      <div class="cv white" id="c6">—</div>
+      <div class="cs" id="c6s">—</div>
+    </div>
+    <div class="card">
+      <div class="cl">Streak</div>
+      <div class="cv" id="c7">—</div>
+      <div class="cs" id="c7s">—</div>
+    </div>
+    <div class="card">
+      <div class="cl">Best Run</div>
+      <div class="cv blue" id="c8">—</div>
+      <div class="cs" id="c8s">—</div>
+    </div>
+  </div>
+
+  <!-- BANKROLL CHART -->
+  <div class="sec-hd">
+    <div class="sec-txt">Cumulative Bankroll</div>
+    <div class="sec-line"></div>
+  </div>
+  <div class="chart-wrap">
+    <svg id="chart" viewBox="0 0 390 120" preserveAspectRatio="none"></svg>
   </div>
 
   <!-- ADD / EDIT BET -->
@@ -708,14 +753,29 @@ function stats() {
   return { tBet, tOut, net, wins, roi: net/tBet*100 };
 }
 
+function streaks() {
+  let cur = 0, curWin = null, bestW = 0, bestL = 0, run = 0, runWin = null;
+  E.forEach(e => {
+    const w = e.pnl > 0;
+    if (w === runWin) run++;
+    else { run = 1; runWin = w; }
+    if (w) bestW = Math.max(bestW, run);
+    else   bestL = Math.max(bestL, run);
+  });
+  cur = run; curWin = runWin;
+  return { cur, curWin, bestW, bestL };
+}
+
 function renderCards() {
   if (!E.length) {
-    ['c1','c2','c3','c4','roi'].forEach(id => document.getElementById(id).textContent = '—');
-    ['c1s','c2s','c3s','c4s'].forEach(id => document.getElementById(id).textContent = 'no events');
+    ['c1','c2','c3','c4','c5','c6','c7','c8','roi'].forEach(id => document.getElementById(id).textContent = '—');
+    ['c1s','c2s','c3s','c4s','c5s','c6s','c7s','c8s'].forEach(id => document.getElementById(id).textContent = 'no events');
     return;
   }
   const { tBet, net, wins, roi } = stats();
   const bW = E.reduce((b,e)=>e.pnl>b.pnl?e:b,E[0]);
+  const wL = E.reduce((b,e)=>e.pnl<b.pnl?e:b,E[0]);
+  const sk = streaks();
   document.getElementById('c1').textContent  = '$'+tBet.toFixed(0);
   document.getElementById('c1s').textContent = E.length+' events';
   const c2 = document.getElementById('c2');
@@ -726,7 +786,70 @@ function renderCards() {
   document.getElementById('c3s').textContent = Math.round(wins/E.length*100)+'% win rate';
   document.getElementById('c4').textContent  = f(bW.pnl,true);
   document.getElementById('c4s').textContent = bW.name.split(' ').slice(0,3).join(' ');
+  document.getElementById('c5').textContent  = f(wL.pnl,true);
+  document.getElementById('c5s').textContent = wL.name.split(' ').slice(0,3).join(' ');
+  document.getElementById('c6').textContent  = '$'+(tBet/E.length).toFixed(0);
+  document.getElementById('c6s').textContent = 'per event';
+  const c7 = document.getElementById('c7');
+  c7.textContent = sk.cur+(sk.curWin?'W':'L');
+  c7.className   = 'cv '+(sk.curWin?'blue':'red');
+  document.getElementById('c7s').textContent = sk.curWin?'riding wins':'cold streak';
+  document.getElementById('c8').textContent  = sk.bestW+'W';
+  document.getElementById('c8s').textContent = 'worst run '+sk.bestL+'L';
   document.getElementById('roi').textContent = 'ROI '+(roi>=0?'+':'')+roi.toFixed(1)+'%';
+}
+
+function renderChart() {
+  const svg = document.getElementById('chart');
+  svg.innerHTML = '';
+  if (!E.length) return;
+  const W = 390, H = 120, padX = 6, padY = 10;
+  // Cumulative P&L series, starting from 0
+  const cum = [0];
+  E.forEach(e => cum.push(cum[cum.length-1] + e.pnl));
+  const mn = Math.min(...cum), mxv = Math.max(...cum);
+  const span = (mxv - mn) || 1;
+  const x = i => padX + i * (W - 2*padX) / (cum.length - 1 || 1);
+  const y = v => padY + (mxv - v) * (H - 2*padY) / span;
+  const pts = cum.map((v,i) => [x(i), y(v)]);
+  const line = pts.map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const last = cum[cum.length-1];
+  const ns = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs) => {
+    const n = document.createElementNS(ns, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    svg.appendChild(n);
+    return n;
+  };
+  // Gradient fill under the curve
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1B6BFF" stop-opacity="0.30"/>
+        <stop offset="100%" stop-color="#1B6BFF" stop-opacity="0"/>
+      </linearGradient>
+    </defs>`;
+  el('polygon', {
+    points: line+` ${pts[pts.length-1][0].toFixed(1)},${H-padY} ${pts[0][0].toFixed(1)},${H-padY}`,
+    fill: 'url(#cg)'
+  });
+  // Zero baseline (dashed) when it falls inside the range
+  if (mn < 0 && mxv > 0) {
+    el('line', { x1: padX, x2: W-padX, y1: y(0), y2: y(0),
+      stroke: 'rgba(216,224,240,0.25)', 'stroke-width': 0.75, 'stroke-dasharray': '3 3' });
+  }
+  el('polyline', { points: line, fill: 'none',
+    stroke: last >= 0 ? '#1B6BFF' : '#FF3A2F', 'stroke-width': 1.75,
+    'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+  // End dot + label
+  const [ex, ey] = pts[pts.length-1];
+  el('circle', { cx: ex, cy: ey, r: 3, fill: last >= 0 ? '#4D8FFF' : '#FF3A2F' });
+  const lbl = el('text', {
+    x: Math.min(ex, W-padX) - 4, y: ey < 20 ? ey+14 : ey-7,
+    'text-anchor': 'end', fill: last >= 0 ? '#4D8FFF' : '#FF5247',
+    'font-family': 'Barlow Condensed, sans-serif', 'font-size': '11', 'font-weight': '600'
+  });
+  lbl.textContent = f(last, true);
 }
 
 function renderBars() {
@@ -829,6 +952,7 @@ document.getElementById('thead').addEventListener('click', ev => {
 
 function renderAll() {
   renderCards();
+  renderChart();
   renderBars();
   renderTable();
   renderPips();
