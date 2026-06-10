@@ -516,6 +516,109 @@ html, body {
 }
 
 /* ═══════════════════════
+   EVENT DETAIL (FIGHT PICKS)
+═══════════════════════ */
+.tr { cursor: pointer; }
+
+.pick-count {
+  display: inline-block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 7px; font-weight: 700;
+  color: var(--blue2);
+  border: 1px solid var(--border);
+  padding: 0 4px;
+  margin-left: 5px;
+  vertical-align: 1px;
+}
+
+.detail {
+  background: var(--p2);
+  border-bottom: 1px solid var(--border);
+  border-left: 1.5px solid var(--blue);
+  padding: 10px 14px;
+  animation: rowIn 0.25s ease both;
+}
+
+.detail-hd {
+  display: flex; align-items: center;
+  margin-bottom: 8px;
+}
+
+.detail-title {
+  font-size: 7px; font-weight: 600;
+  letter-spacing: 0.25em; text-transform: uppercase;
+  color: var(--blue2);
+  flex: 1;
+}
+
+.btn.mini {
+  font-size: 9px;
+  padding: 4px 9px;
+}
+
+.pick-row {
+  display: grid;
+  grid-template-columns: 1fr 44px 50px 26px 20px;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(27,107,255,0.07);
+}
+.pick-row:last-of-type { border-bottom: none; }
+
+.pk-name {
+  font-size: 9.5px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.pk-odds, .pk-stake {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9.5px; color: var(--dim);
+  text-align: right;
+}
+
+.pk-res {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 8px; font-weight: 700;
+  text-align: center;
+  padding: 1px 0;
+}
+.pk-res.W { background: var(--blue); color: #fff; }
+.pk-res.L { background: var(--red);  color: #fff; }
+.pk-res.P { background: var(--p3);   color: var(--dim); }
+
+.pk-del {
+  background: none; border: none; cursor: pointer;
+  color: var(--dim); font-size: 11px; line-height: 1;
+}
+.pk-del:hover { color: var(--red); }
+
+.no-picks {
+  font-size: 9px; font-weight: 300;
+  color: var(--dim);
+  padding: 2px 0 4px;
+}
+
+.pick-form {
+  display: grid;
+  grid-template-columns: 1fr 52px 56px 54px 50px;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.pick-form input, .pick-form select {
+  width: 100%;
+  background: var(--p1);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  padding: 5px 6px;
+  outline: none;
+}
+.pick-form input:focus, .pick-form select:focus { border-color: var(--blue); }
+
+/* ═══════════════════════
    FOOTER PIPS
 ═══════════════════════ */
 .footer {
@@ -884,6 +987,69 @@ function sorted() {
   return a;
 }
 
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let openI = null;   // expanded event index, or null
+
+function buildDetail(e) {
+  const d = document.createElement('div');
+  d.className = 'detail';
+  const picks = e.picks || [];
+  const rows = picks.length
+    ? picks.map((p, pi) => `
+        <div class="pick-row">
+          <div class="pk-name">${esc(p.fighter)}</div>
+          <div class="pk-odds">${esc(p.odds)}</div>
+          <div class="pk-stake">$${(+p.stake||0).toFixed(0)}</div>
+          <div class="pk-res ${p.result}">${p.result === 'P' ? '—' : p.result}</div>
+          <button class="pk-del" data-pi="${pi}" title="Remove pick">✕</button>
+        </div>`).join('')
+    : `<div class="no-picks">No fight picks logged for this event yet.</div>`;
+  d.innerHTML = `
+    <div class="detail-hd">
+      <div class="detail-title">Fight Picks — ${esc(e.name)}</div>
+      <button class="btn ghost mini" data-act="edit">Edit Event</button>
+    </div>
+    ${rows}
+    <div class="pick-form">
+      <input type="text" data-f="fighter" placeholder="Fighter" autocomplete="off">
+      <input type="text" data-f="odds" placeholder="-150" autocomplete="off">
+      <input type="number" data-f="stake" step="0.01" min="0" placeholder="$">
+      <select data-f="result">
+        <option value="W">Win</option>
+        <option value="L">Loss</option>
+        <option value="P">Open</option>
+      </select>
+      <button class="btn mini" data-act="addpick">Add</button>
+    </div>`;
+  d.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const del = ev.target.closest('.pk-del');
+    if (del) {
+      e.picks.splice(+del.dataset.pi, 1);
+      save(); renderTable();
+      return;
+    }
+    const act = ev.target.closest('[data-act]');
+    if (!act) return;
+    if (act.dataset.act === 'edit') openEdit(e.i);
+    if (act.dataset.act === 'addpick') {
+      const get = k => d.querySelector(`[data-f="${k}"]`).value;
+      const fighter = get('fighter').trim();
+      if (!fighter) { alert('Enter a fighter name.'); return; }
+      (e.picks = e.picks || []).push({
+        fighter,
+        odds: get('odds').trim() || '—',
+        stake: parseFloat(get('stake')) || 0,
+        result: get('result'),
+      });
+      save(); renderTable();
+    }
+  });
+  return d;
+}
+
 function renderTable() {
   const { tBet, tOut, net } = stats();
   const tb = document.getElementById('tbody');
@@ -893,13 +1059,18 @@ function renderTable() {
     r.className = 'tr '+(e.pnl>=0?'pr':'ls');
     r.dataset.i = e.i;
     r.style.animationDelay = (idx*0.015)+'s';
+    const n = (e.picks || []).length;
     r.innerHTML = `
-      <div class="t-name">${e.name}</div>
+      <div class="t-name">${esc(e.name)}${n ? `<span class="pick-count">${n}</span>` : ''}</div>
       <div class="td mu">$${e.bet.toFixed(0)}</div>
       <div class="td mu">$${e.withdrew.toFixed(0)}</div>
       <div class="td ${e.pnl>=0?'pr':'ls'}">${f(e.pnl,true)}</div>`;
-    r.addEventListener('click', () => openEdit(e.i));
+    r.addEventListener('click', () => {
+      openI = openI === e.i ? null : e.i;
+      renderTable();
+    });
     tb.appendChild(r);
+    if (openI === e.i) tb.appendChild(buildDetail(e));
   });
   const tot = document.createElement('div');
   tot.className = 'tr tot';
@@ -1043,6 +1214,7 @@ fDelete.addEventListener('click', () => {
   if (!confirm('Delete "'+E[editI].name+'"?')) return;
   E.splice(editI, 1);
   E.forEach((e,i) => e.i = i);
+  openI = null;
   save();
   closeForm();
   renderAll();
@@ -1052,6 +1224,7 @@ document.getElementById('f-reset').addEventListener('click', () => {
   if (!confirm('Discard your changes and restore the original 18 events?')) return;
   E = SEED.map(e => ({...e}));
   E.forEach((e,i) => e.i = i);
+  openI = null;
   save();
   closeForm();
   renderAll();
